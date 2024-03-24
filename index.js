@@ -17,6 +17,7 @@ const Messages = require("./routes/message");
 const Auth = require("./routes/users");
 const Token = require("./routes/token");
 const Contacts = require("./routes/contacts");
+const Status = require("./routes/status");
 
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
@@ -24,10 +25,11 @@ httpServer.listen(PORT, () => {
 });
 
 app.get("/", (req, res) => {
-  res.write(`<h1>Socket Server is running on:${PORT}</h1>`);
+  res.send(`Socket Server is running on:${PORT}`);
 });
 
 app.use("/api", Messages);
 app.use("/api/auth", Auth);
 app.use("/api/auth", Token);
 app.use("/api", Contacts);
+app.use("/api/status", Status);

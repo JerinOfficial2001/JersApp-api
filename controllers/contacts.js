@@ -1,15 +1,15 @@
-const { Chats } = require("../model/chats");
-const { Contacts } = require("../model/contacts");
-const { Message } = require("../model/message");
+const { WC_Chats } = require("../model/chats");
+const { WC_Contact } = require("../model/contacts");
+const { WC_Message } = require("../model/message");
 
 exports.addContacts = async (req, res, next) => {
   try {
-    const allContacts = await Contacts.find({
+    const allContacts = await WC_Contact.find({
       user_id: req.body.user_id,
       Contact_id: req.body.Contact_id,
     });
     if (allContacts.length == 0) {
-      const response = await Contacts.create(req.body);
+      const response = await WC_Contact.create(req.body);
       res.status(200).json({ status: "ok", data: response });
     } else {
       res.status(200).json({
@@ -26,7 +26,7 @@ exports.addContacts = async (req, res, next) => {
 exports.getContacts = async (req, res, next) => {
   const { user_id } = req.query;
   try {
-    const allContacts = await Contacts.find({});
+    const allContacts = await WC_Contact.find({});
     const filteredData = allContacts.filter(
       (contact) => contact.user_id == user_id
     );
@@ -43,27 +43,27 @@ exports.getContacts = async (req, res, next) => {
 exports.deleteContacts = async (req, res, next) => {
   const { sender_id, receiver_id, Contact_id } = req.query;
   try {
-    const result = await Contacts.findOne({ Contact_id });
+    const result = await WC_Contact.findOne({ Contact_id });
 
     if (result) {
-      const response = await Chats.find({});
+      const response = await WC_Chats.find({});
       const chatIDs = [sender_id, receiver_id];
 
       const filteredChats = response.find((i) =>
         chatIDs.every((id) => i.sender == id || i.receiver == id)
       );
       if (filteredChats) {
-        const msgObj = await Message.find({ chatID: filteredChats._id });
+        const msgObj = await WC_Message.find({ chatID: filteredChats._id });
         if (msgObj) {
-          const deletedContactObj = await Contacts.findByIdAndDelete(
+          const deletedContactObj = await WC_Contact.findByIdAndDelete(
             result._id
           );
           if (deletedContactObj) {
-            const deletedChat = await Chats.findByIdAndDelete(
+            const deletedChat = await WC_Chats.findByIdAndDelete(
               filteredChats._id
             );
             if (deletedChat) {
-              const deletedMsg = await Message.deleteMany({
+              const deletedMsg = await WC_Message.deleteMany({
                 chatID: filteredChats._id,
               });
 
@@ -86,11 +86,11 @@ exports.deleteContacts = async (req, res, next) => {
             res.status(200).json({ status: "ok", message: "NotDeleted" });
           }
         } else {
-          const deletedContactObj = await Contacts.findByIdAndDelete(
+          const deletedContactObj = await WC_Contact.findByIdAndDelete(
             receiver_id
           );
           if (deletedContactObj) {
-            const deletedChat = await Chats.findByIdAndDelete(
+            const deletedChat = await WC_Chats.findByIdAndDelete(
               filteredChats._id
             );
             if (deletedChat) {
@@ -107,7 +107,9 @@ exports.deleteContacts = async (req, res, next) => {
           }
         }
       } else {
-        const deletedContactObj = await Contacts.findByIdAndDelete(result._id);
+        const deletedContactObj = await WC_Contact.findByIdAndDelete(
+          result._id
+        );
         if (deletedContactObj) {
           res.status(200).json({ status: "ok", message: "Contact Deleted" });
         } else {

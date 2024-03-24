@@ -1,8 +1,8 @@
-const { Message } = require("../model/message");
+const { WC_Message } = require("../model/message");
 
 exports.getAllMessage = async (req, res, next) => {
   try {
-    const response = await Message.find({});
+    const response = await WC_Message.find({});
     res.status(200).json({ status: "ok", data: response });
   } catch (error) {
     next("Error:", error);
@@ -12,7 +12,7 @@ exports.getAllMessage = async (req, res, next) => {
 exports.deleteMsgs = async (req, res, next) => {
   const { id } = req.query;
   try {
-    const result = await Message.findByIdAndDelete(id);
+    const result = await WC_Message.findByIdAndDelete(id);
     if (result) {
       res.status(200).json({ status: "ok", message: "deleted" });
     } else {

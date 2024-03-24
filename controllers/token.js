@@ -1,8 +1,8 @@
-const { Token } = require("../model/token");
-const { TokenID } = require("../model/tokenID");
+const { WC_Token } = require("../model/token");
+const { WC_TokenID } = require("../model/tokenID");
 exports.getToken = async (req, res, next) => {
   try {
-    const token = await Token.find({});
+    const token = await WC_Token.find({});
 
     if (token) {
       res.status(200).json({ status: "ok", data: token });
@@ -16,7 +16,7 @@ exports.getToken = async (req, res, next) => {
 };
 exports.addToken = async (req, res, next) => {
   try {
-    const token = await Token.create(req.body);
+    const token = await WC_Token.create(req.body);
     if (token) {
       res.status(200).json({ status: "ok", data: token });
     } else {
@@ -30,7 +30,7 @@ exports.addToken = async (req, res, next) => {
 exports.deleteToken = async (req, res, next) => {
   try {
     const { id } = req.query;
-    const token = await Token.findByIdAndDelete(id);
+    const token = await WC_Token.findByIdAndDelete(id);
 
     if (token) {
       res.status(200).json({ status: "ok", data: "deleted" });
@@ -44,7 +44,7 @@ exports.deleteToken = async (req, res, next) => {
 };
 exports.getTokenID = async (req, res, next) => {
   try {
-    const token = await TokenID.find({});
+    const token = await WC_TokenID.find({});
     if (token) {
       res.status(200).json({ status: "ok", data: token });
     } else {
@@ -57,7 +57,7 @@ exports.getTokenID = async (req, res, next) => {
 };
 exports.addTokenID = async (req, res, next) => {
   try {
-    const token = await TokenID.create(req.body);
+    const token = await WC_TokenID.create(req.body);
     if (token) {
       res.status(200).json({ status: "ok", data: token });
     } else {
@@ -71,7 +71,7 @@ exports.addTokenID = async (req, res, next) => {
 exports.deleteTokenID = async (req, res, next) => {
   try {
     const { id } = req.query;
-    const token = await TokenID.findByIdAndDelete(id);
+    const token = await WC_TokenID.findByIdAndDelete(id);
 
     if (token) {
       res.status(200).json({ status: "ok", data: token });
@@ -86,7 +86,7 @@ exports.deleteTokenID = async (req, res, next) => {
 exports.getTokenByID = async (req, res, next) => {
   try {
     const { id } = req.query;
-    const token = await Token.findById(id);
+    const token = await WC_Token.findById(id);
 
     if (token) {
       res.status(200).json({ status: "ok", data: token });
@@ -102,28 +102,28 @@ exports.authByTokenID = async (req, res, next) => {
   try {
     const { token, tokenArr } = req.body;
     const filteredTokenID = tokenArr.filter((elem) => elem.token == token);
-    res.send(filteredTokenID);
-    // if (filteredTokenID) {
-    //   const response = await fetch(
-    //     "https://socket-server-fhra.onrender.com/api/auth/tokenID",
-    //     {
-    //       method: "POST",
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //         Accept: "application/json",
-    //         "Access-Control-Allow-Origin": "*",
-    //       },
-    //       body: JSON.stringify({ tokenID: filteredTokenID[0]._id }),
-    //     }
-    //   ).then((res) => res.json());
-    //   if (response) {
-    //     res.status(200).json({ status: "ok", data: response });
-    //   } else {
-    //     res.status(200).json({ status: "ok", data: "auth failed" });
-    //   }
-    // } else {
-    //   res.status(200).json({ status: "error", data: "authentication failed" });
-    // }
+    // res.send(filteredTokenID);
+    if (filteredTokenID) {
+      const response = await fetch(
+        "https://socket-server-fhra.onrender.com/api/auth/tokenID",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+          body: JSON.stringify({ tokenID: filteredTokenID[0]._id }),
+        }
+      ).then((res) => res.json());
+      if (response) {
+        res.status(200).json({ status: "ok", data: response });
+      } else {
+        res.status(200).json({ status: "ok", data: "auth failed" });
+      }
+    } else {
+      res.status(200).json({ status: "error", data: "authentication failed" });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send(error);

@@ -1,11 +1,13 @@
-const { Auth } = require("../model/auth");
+const { WC_Auth } = require("../model/auth");
 const jwt = require("jsonwebtoken");
-const { Token } = require("../model/token");
-const { TokenID } = require("../model/tokenID");
+const { WC_Token } = require("../model/token");
+const { WC_TokenID } = require("../model/tokenID");
+const cloudinary = require("../utils/cloudinary");
+
 const SECRET_KEY = process.env.SECRET_KEY;
 exports.getUsers = async (req, res, next) => {
   try {
-    const allData = await Auth.find({});
+    const allData = await WC_Auth.find({});
     if (allData) {
       res.status(200).json({ status: "ok", data: allData });
     }
@@ -14,9 +16,22 @@ exports.getUsers = async (req, res, next) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+exports.GetUsersByID = async (req, res, next) => {
+  try {
+    const User = await WC_Auth.findById(req.params.id);
+    if (User) {
+      res.status(200).json({ status: "ok", data: User });
+    } else {
+      res.status(200).json({ status: "error", message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 exports.login = async (req, res, next) => {
   try {
-    const user = await Auth.findOne({ mobNum: req.body.mobNum });
+    const user = await WC_Auth.findOne({ mobNum: req.body.mobNum });
     if (!user) {
       res.status(200).json({ status: "error", message: "User not found" });
     } else if (user && user.password == req.body.password) {
@@ -26,7 +41,7 @@ exports.login = async (req, res, next) => {
 
       res.status(200).json({ status: "ok", data: { token } });
     } else {
-      res.status(401).json({ status: "error", message: "Invalid credentials" });
+      res.status(200).json({ status: "error", message: "Invalid credentials" });
     }
   } catch (error) {
     console.log(error);
@@ -36,17 +51,40 @@ exports.login = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   try {
     const { mobNum, password, name } = req.body;
-    const allData = await Auth.find({});
+    const allData = await WC_Auth.find({});
     const particularData = allData.find((i) => i.mobNum == mobNum);
     if (particularData) {
-      res.status(500).json({ status: "error", data: "User Already Exists" });
+      res.status(200).json({ status: "error", message: "User Already Exists" });
     } else {
-      const response = await Auth.create({
-        mobNum,
-        password,
-        name,
-      });
-      res.status(200).json({ status: "ok", data: response });
+      if (req.file) {
+        const uploadRes = await cloudinary.uploader.upload(req.file.path, {
+          upload_preset: "whatsappclone",
+        });
+        if (uploadRes) {
+          const user = new WC_Auth({
+            mobNum,
+            password,
+            name,
+            image: {
+              url: uploadRes.secure_url,
+              public_id: uploadRes.public_id,
+            },
+          });
+          const savedUser = await user.save();
+          res.status(200).json({ status: "ok", data: savedUser });
+        } else {
+          res
+            .status(200)
+            .json({ status: "error", message: "Image Updation failed" });
+        }
+      } else {
+        const response = await WC_Auth.create({
+          mobNum,
+          password,
+          name,
+        });
+        res.status(200).json({ status: "ok", data: response });
+      }
     }
   } catch (error) {
     console.error("Error:", error);
@@ -60,51 +98,51 @@ exports.userData = async (req, res, next) => {
 
     if (!token) {
       return res
-        .status(401)
-        .json({ status: "error", data: "Unauthorized - Missing Token" });
+        .status(200)
+        .json({ status: "error", message: "Unauthorized - Missing WC_Token" });
     }
 
     // Verify and decode the token
     const decoded = jwt.verify(token, SECRET_KEY);
 
     // Retrieve user data based on the decoded information
-    const user = await Auth.findById(decoded.userId);
+    const user = await WC_Auth.findById(decoded.userId);
 
     if (user) {
       res.status(200).json({ status: "ok", data: { user } });
     } else {
-      res.status(404).json({ status: "error", data: "User not found" });
+      res.status(404).json({ status: "error", message: "User not found" });
     }
   } catch (error) {
     console.error("Error:", error);
     res
       .status(401)
-      .json({ status: "error", data: "Unauthorized - Invalid Token" });
+      .json({ status: "error", message: "Unauthorized - Invalid WC_Token" });
   }
 };
 exports.logout = async (req, res, next) => {
   try {
     const { token, name } = req.body;
     if (token) {
-      const tokenId = await Token.findOne({ token });
+      const tokenId = await WC_Token.findOne({ token });
       if (tokenId) {
-        const id = await TokenID.findOne({ tokenID: tokenId._id });
+        const id = await WC_TokenID.findOne({ tokenID: tokenId._id });
         if (id) {
           if (!name) {
-            await Token.findByIdAndDelete(tokenId._id);
-            await TokenID.findByIdAndDelete(id._id);
+            await WC_Token.findByIdAndDelete(tokenId._id);
+            await WC_TokenID.findByIdAndDelete(id._id);
             res
               .status(200)
               .json({ status: "ok", message: "Logged out successfully" });
           } else {
-            await TokenID.findByIdAndDelete(id._id);
+            await WC_TokenID.findByIdAndDelete(id._id);
             res
               .status(200)
               .json({ status: "ok", message: "Web Session Ended" });
           }
         } else {
           if (!name) {
-            await Token.findByIdAndDelete(tokenId._id);
+            await WC_Token.findByIdAndDelete(tokenId._id);
             res
               .status(200)
               .json({ status: "ok", message: "Logged out successfully" });
@@ -118,10 +156,62 @@ exports.logout = async (req, res, next) => {
     } else {
       res
         .status(200)
-        .json({ status: "error", data: "Logged out successfully" });
+        .json({ status: "error", message: "Logged out successfully" });
     }
   } catch (error) {
     console.log(error);
     res.status(500).send(error);
+  }
+};
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { mobNum, password, name, image } = req.body;
+    // const userDatas = await WC_Auth.findById(req.params.id);
+
+    if (req.file) {
+      if (image !== null && image.public_id) {
+        await cloudinary.uploader.destroy(image.public_id);
+      }
+      const uploadRes = await cloudinary.uploader.upload(req.file.path, {
+        upload_preset: "whatsappclone",
+      });
+      if (uploadRes) {
+        const user = {
+          mobNum,
+          password,
+          name,
+          image: {
+            url: uploadRes.secure_url,
+            public_id: uploadRes.public_id,
+          },
+        };
+        const savedUser = await WC_Auth.findByIdAndUpdate(req.params.id, user, {
+          new: true,
+        });
+        if (savedUser) {
+          res
+            .status(200)
+            .json({ status: "ok", message: "Updated Successfully" });
+        } else {
+          res.status(200).json({ status: "error", message: "Updation failed" });
+        }
+      } else {
+        res
+          .status(200)
+          .json({ status: "error", message: "Image Updation failed" });
+      }
+    } else {
+      const savedUser = await WC_Auth.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        {
+          new: true,
+        }
+      );
+      res.status(200).json({ status: "ok", data: savedUser });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

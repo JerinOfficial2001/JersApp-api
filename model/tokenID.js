@@ -3,5 +3,5 @@ const tokenSchema = new mongoose.Schema({
   tokenID: { type: String, unique: true },
 });
 
-const TokenID = mongoose.model("TokenID", tokenSchema);
-exports.TokenID = TokenID;
+const WC_TokenID = mongoose.model("WC_TokenID", tokenSchema);
+exports.WC_TokenID = WC_TokenID;
