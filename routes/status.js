@@ -20,7 +20,7 @@ const fileStorageEngine = multer.diskStorage({
 const upload = multer({ storage: fileStorageEngine });
 
 router.get("/get", getAllStatus);
-router.post("/add", upload.single("file"), addStatus);
+router.post("/add", upload.array("file"), addStatus);
 router.get("/get/:id", getStatusByID);
 router.delete("/delete/:id", deleteStatus);
 

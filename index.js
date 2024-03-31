@@ -8,6 +8,7 @@ const cors = require("cors");
 app.use(cors());
 app.use(express.json());
 require("dotenv").config();
+const path = require("path");
 const db = process.env.MONGO_DB;
 mongoose.connect(db).then(() => {
   console.log("DB Connected");
@@ -33,3 +34,4 @@ app.use("/api/auth", Auth);
 app.use("/api/auth", Token);
 app.use("/api", Contacts);
 app.use("/api/status", Status);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));

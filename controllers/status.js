@@ -1,11 +1,23 @@
+const { WC_Auth } = require("../model/auth");
 const { WC_status } = require("../model/status");
 const cloudinary = require("../utils/cloudinary");
-
+const BASE_URL = process.env.BASE_URL;
 exports.getAllStatus = async (req, res, next) => {
   try {
     const allData = await WC_status.find({});
     if (allData) {
-      res.status(200).json({ status: "ok", data: allData });
+      // console.log(BASE_URL);
+      const DATA = allData.map((elem) => ({
+        _id: elem._id,
+        userID: elem.userID,
+        userName: elem.userName,
+        text: elem.text,
+        file: elem.file.map((img) => ({
+          format: img.format,
+          url: `${BASE_URL}/${img.url}`,
+        })),
+      }));
+      res.status(200).json({ status: "ok", data: DATA });
     }
   } catch (error) {
     console.error("Error:", error);
@@ -16,7 +28,17 @@ exports.getStatusByID = async (req, res, next) => {
   try {
     const allData = await WC_status.findById(req.params.id);
     if (allData) {
-      res.status(200).json({ status: "ok", data: allData });
+      const DATA = {
+        _id: allData._id,
+        userID: allData.userID,
+        userName: allData.userName,
+        text: allData.text,
+        file: allData.file.map((img) => ({
+          format: img.format,
+          url: `${BASE_URL}/${img.url}`,
+        })),
+      };
+      res.status(200).json({ status: "ok", data: DATA });
     }
   } catch (error) {
     console.error("Error:", error);
@@ -26,41 +48,42 @@ exports.getStatusByID = async (req, res, next) => {
 exports.addStatus = async (req, res, next) => {
   const { userID, text, image } = req.body;
   try {
-    if (!req.file) {
+    if (!req.files) {
       res.status(200).json({ status: "error", message: "No data found" });
     } else {
-      const uploadRes = await cloudinary.uploader.upload(
-        req.file.path,
-        {
-          resource_type: req.file.mimetype === "image/jpeg" ? "image" : "video",
-          upload_preset: "whatsappcloneVDO",
-        },
-        (err, response) => {
-          if (err) {
-            return err;
-          } else {
-            return response;
-          }
-        }
-      );
-      if (uploadRes) {
-        const newVal = new WC_status({
-          userID,
-          text,
-          file: {
-            url: uploadRes.secure_url,
-            public_id: uploadRes.public_id,
-            format: uploadRes.format,
-          },
-        });
-        const result = await newVal.save();
-        if (result) {
-          res.status(200).json({ status: "ok", message: "Status Posted" });
-        } else {
-          res.status(200).json({ status: "error", message: "Failed" });
-        }
+      // const uploadRes = await cloudinary.uploader.upload(
+      //   req.file.path,
+      //   {
+      //     resource_type: req.file.mimetype === "image/jpeg" ? "image" : "video",
+      //     upload_preset: "whatsappcloneVDO",
+      //   },
+      //   (err, response) => {
+      //     if (err) {
+      //       return err;
+      //     } else {
+      //       return response;
+      //     }
+      //   }
+      // );
+      // if (uploadRes) {
+      // } else {
+      //   res.status(200).json({ status: "error", message: "Updation failed" });
+      // }
+      const userData = await WC_Auth.findOne({ _id: userID });
+      const newVal = new WC_status({
+        userID,
+        text,
+        file: req.files.map((file) => ({
+          url: file.path,
+          format: file.mimetype,
+        })),
+        userName: userData?.name,
+      });
+      const result = await newVal.save();
+      if (result) {
+        res.status(200).json({ status: "ok", message: "Status Posted" });
       } else {
-        res.status(200).json({ status: "error", message: "Updation failed" });
+        res.status(200).json({ status: "error", message: "Failed" });
       }
     }
   } catch (error) {
