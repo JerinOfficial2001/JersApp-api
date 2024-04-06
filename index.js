@@ -3,6 +3,8 @@ const express = require("express");
 const { createServer } = require("http");
 
 const app = express();
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: true }));
 const httpServer = createServer(app);
 const cors = require("cors");
 app.use(cors());

@@ -51,39 +51,44 @@ exports.addStatus = async (req, res, next) => {
     if (!req.files) {
       res.status(200).json({ status: "error", message: "No data found" });
     } else {
-      // const uploadRes = await cloudinary.uploader.upload(
-      //   req.file.path,
-      //   {
-      //     resource_type: req.file.mimetype === "image/jpeg" ? "image" : "video",
-      //     upload_preset: "whatsappcloneVDO",
-      //   },
-      //   (err, response) => {
-      //     if (err) {
-      //       return err;
-      //     } else {
-      //       return response;
-      //     }
-      //   }
-      // );
-      // if (uploadRes) {
-      // } else {
-      //   res.status(200).json({ status: "error", message: "Updation failed" });
-      // }
-      const userData = await WC_Auth.findOne({ _id: userID });
-      const newVal = new WC_status({
-        userID,
-        text,
-        file: req.files.map((file) => ({
-          url: file.path,
-          format: file.mimetype,
-        })),
-        userName: userData?.name,
-      });
-      const result = await newVal.save();
-      if (result) {
-        res.status(200).json({ status: "ok", message: "Status Posted" });
+      const userData = await WC_status.findOne({ userID });
+      console.log(userData, "Data");
+      if (userData) {
+        // If user data exists, update the existing document
+        userData.file = userData.file.concat(
+          req.files.map((file) => ({
+            url: file.path,
+            format: file.mimetype,
+          }))
+        );
+        const result = await userData.save();
+        console.log(result, "res");
+        if (result) {
+          res.status(200).json({ status: "ok", message: "Status Updated" });
+        } else {
+          res
+            .status(200)
+            .json({ status: "error", message: "Failed to Update Status" });
+        }
       } else {
-        res.status(200).json({ status: "error", message: "Failed" });
+        // If user data doesn't exist, create a new document
+        const newVal = new WC_status({
+          userID,
+          text,
+          file: req.files.map((file) => ({
+            url: file.path,
+            format: file.mimetype,
+          })),
+          userName: userData?.name,
+        });
+        const result = await newVal.save();
+        if (result) {
+          res.status(200).json({ status: "ok", message: "Status Posted" });
+        } else {
+          res
+            .status(200)
+            .json({ status: "error", message: "Failed to Post Status" });
+        }
       }
     }
   } catch (error) {
@@ -91,6 +96,7 @@ exports.addStatus = async (req, res, next) => {
     res.status(500).send(error);
   }
 };
+
 exports.deleteStatus = async (req, res, next) => {
   try {
     const status = await WC_status.findById(req.params.id);

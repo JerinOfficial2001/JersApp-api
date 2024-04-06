@@ -165,12 +165,11 @@ exports.logout = async (req, res, next) => {
 };
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { mobNum, password, name, image } = req.body;
+    const { mobNum, password, name, public_id } = req.body;
     // const userDatas = await WC_Auth.findById(req.params.id);
-
     if (req.file) {
-      if (image !== null && image.public_id) {
-        await cloudinary.uploader.destroy(image.public_id);
+      if (public_id !== "") {
+        await cloudinary.uploader.destroy(public_id);
       }
       const uploadRes = await cloudinary.uploader.upload(req.file.path, {
         upload_preset: "whatsappclone",
