@@ -1,3 +1,4 @@
+const { WC_Chats } = require("../model/chats");
 const { WC_Message } = require("../model/message");
 
 exports.getAllMessage = async (req, res, next) => {
@@ -21,5 +22,26 @@ exports.deleteMsgs = async (req, res, next) => {
   } catch (error) {
     next("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.getLastMessage = async (req, res) => {
+  try {
+    const chats = await WC_Chats.find({});
+    const chatIDs = [req.params.senderID, req.params.receiverID];
+
+    const filteredChats = chats.find((i) =>
+      chatIDs.every((id) => i.sender == id || i.receiver == id)
+    );
+
+    const lastMsg = await WC_Message.find({ chatID: filteredChats._id });
+    res.status(200).json({
+      status: "ok",
+      data: {
+        message: lastMsg[lastMsg.length - 1].message,
+        sender: lastMsg[lastMsg.length - 1].sender,
+      },
+    });
+  } catch (error) {
+    res.status(404).json({ status: "error", message: "something Went wrong" });
   }
 };
