@@ -28,7 +28,7 @@ httpServer.listen(PORT, () => {
 });
 
 app.get("/", (req, res) => {
-  res.send(`Socket Server is running on:${PORT}`);
+  res.status(200).json({status:"ok",message:"Socket Server is running"});
 });
 
 app.use("/api", Messages);
