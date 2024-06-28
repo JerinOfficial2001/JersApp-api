@@ -17,6 +17,7 @@ exports.getAllStatus = async (req, res, next) => {
           url: `${BASE_URL}/${img.url}`,
         })),
       }));
+      console.log(DATA, "allStatus");
       res.status(200).json({ status: "ok", data: DATA });
     }
   } catch (error) {
@@ -51,17 +52,19 @@ exports.addStatus = async (req, res, next) => {
     if (!req.files) {
       res.status(200).json({ status: "error", message: "No data found" });
     } else {
-      const userData = await WC_status.findOne({ userID });
+      const userStatus = await WC_status.findOne({ userID });
+      const userData = await WC_Auth.findById(userID);
       console.log(userData, "Data");
-      if (userData) {
+      if (userStatus && userData) {
         // If user data exists, update the existing document
-        userData.file = userData.file.concat(
+        userStatus.file = userStatus.file.concat(
           req.files.map((file) => ({
             url: file.path,
             format: file.mimetype,
           }))
         );
-        const result = await userData.save();
+        userStatus.userName = userData.name;
+        const result = await userStatus.save();
         console.log(result, "res");
         if (result) {
           res.status(200).json({ status: "ok", message: "Status Updated" });

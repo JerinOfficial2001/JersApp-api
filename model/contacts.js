@@ -5,6 +5,8 @@ const WC_ContactSchema = new mongoose.Schema(
     name: String,
     user_id: String,
     ContactDetails: Object,
+    lastMsg: Object,
+    msgCount: Number,
   },
   {
     timestamps: true,
