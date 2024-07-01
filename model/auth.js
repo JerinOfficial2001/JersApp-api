@@ -4,6 +4,7 @@ const WC_AuthSchema = new mongoose.Schema({
   password: String,
   name: String,
   image: { type: Object },
+  theme: String
 });
 
 const WC_Auth = mongoose.model("WC_Auth", WC_AuthSchema);

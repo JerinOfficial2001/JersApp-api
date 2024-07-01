@@ -69,6 +69,7 @@ exports.register = async (req, res, next) => {
               url: uploadRes.secure_url,
               public_id: uploadRes.public_id,
             },
+            theme: "JersApp"
           });
           const savedUser = await user.save();
           res.status(200).json({ status: "ok", data: savedUser });
@@ -81,7 +82,7 @@ exports.register = async (req, res, next) => {
         const response = await WC_Auth.create({
           mobNum,
           password,
-          name,
+          name, theme: "JersApp"
         });
         res.status(200).json({ status: "ok", data: response });
       }
@@ -165,8 +166,8 @@ exports.logout = async (req, res, next) => {
 };
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { mobNum, password, name, public_id } = req.body;
-    // const userDatas = await WC_Auth.findById(req.params.id);
+    const { mobNum, password, name, public_id, theme } = req.body;
+    const userDatas = await WC_Auth.findById(req.params.id);
     if (req.file) {
       if (public_id !== "") {
         await cloudinary.uploader.destroy(public_id);
@@ -183,6 +184,7 @@ exports.updateProfile = async (req, res, next) => {
             url: uploadRes.secure_url,
             public_id: uploadRes.public_id,
           },
+          theme: userDatas.theme
         };
         const savedUser = await WC_Auth.findByIdAndUpdate(req.params.id, user, {
           new: true,
@@ -214,3 +216,28 @@ exports.updateProfile = async (req, res, next) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+exports.updateTheme = async (req, res) => {
+  try {
+    const user = await WC_Auth.findById(req.params.id)
+    if (user) {
+      user.theme == req.body.theme
+      const result = await WC_Auth.findByIdAndUpdate(req.params.id, user)
+      if (result) {
+        res
+          .status(200)
+          .json({ status: "ok", message: "Theme updated successfully" });
+      } else {
+        res
+          .status(200)
+          .json({ status: "error", message: "Theme updation failed" });
+      }
+    } else {
+      res
+        .status(200)
+        .json({ status: "error", message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
