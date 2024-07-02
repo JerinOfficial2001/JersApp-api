@@ -11,6 +11,15 @@ const {
 } = require("../controllers/users");
 const router = express.Router();
 const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../utils/cloudinary");
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "JersApp/JersApp_Profile",
+  },
+});
 
 const fileStorageEngine = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -21,7 +30,7 @@ const fileStorageEngine = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: fileStorageEngine });
+const upload = multer({ storage: storage });
 
 router.get("/getUsers", getUsers);
 router.get("/get/:id", GetUsersByID);

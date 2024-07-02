@@ -50,33 +50,44 @@ exports.login = async (req, res, next) => {
 };
 exports.register = async (req, res, next) => {
   try {
+    console.log("logged");
     const { mobNum, password, name } = req.body;
     const allData = await WC_Auth.find({});
     const particularData = allData.find((i) => i.mobNum == mobNum);
     if (particularData) {
+      if (req.file) {
+        this.DeleteImage(req.file.path);
+      }
       res.status(200).json({ status: "error", message: "User Already Exists" });
     } else {
       if (req.file) {
-        const uploadRes = await cloudinary.uploader.upload(req.file.path, {
-          upload_preset: "whatsappclone",
+        const user = new WC_Auth({
+          mobNum,
+          password,
+          name,
+          image: {
+            url: req.file.path,
+            public_id: req.file.path
+              .split("/")
+              .slice(-2)
+              .join("/")
+              .replace(/\.\w+$/, ""),
+            mimetype: req.file.mimetype,
+            originalname: req.file.originalname,
+            size: req.file.size,
+          },
+          theme: "JersApp",
         });
-        if (uploadRes) {
-          const user = new WC_Auth({
-            mobNum,
-            password,
-            name,
-            image: {
-              url: uploadRes.secure_url,
-              public_id: uploadRes.public_id,
-            },
-            theme: "JersApp",
-          });
-          const savedUser = await user.save();
+        const savedUser = await user.save();
+        if (savedUser) {
           res.status(200).json({ status: "ok", data: savedUser });
         } else {
+          if (req.file) {
+            this.DeleteImage(req.file.path);
+          }
           res
             .status(200)
-            .json({ status: "error", message: "Image Updation failed" });
+            .json({ status: "error", message: "Registration failed" });
         }
       } else {
         const response = await WC_Auth.create({
@@ -85,10 +96,22 @@ exports.register = async (req, res, next) => {
           name,
           theme: "JersApp",
         });
-        res.status(200).json({ status: "ok", data: response });
+        if (response) {
+          res.status(200).json({ status: "ok", data: response });
+        } else {
+          if (req.file) {
+            this.DeleteImage(req.file.path);
+          }
+          res
+            .status(200)
+            .json({ status: "error", message: "Registration failed" });
+        }
       }
     }
   } catch (error) {
+    if (req.file) {
+      this.DeleteImage(req.file.path);
+    }
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
@@ -166,52 +189,85 @@ exports.logout = async (req, res, next) => {
   }
 };
 exports.updateProfile = async (req, res, next) => {
-  console.log("updateProfile");
   try {
-    const { mobNum, password, name, public_id, theme } = req.body;
+    const { mobNum, password, name, theme } = req.body;
     const userDatas = await WC_Auth.findById(req.params.id);
-    if (req.file) {
-      if (public_id !== "") {
-        await cloudinary.uploader.destroy(public_id);
+    if (userDatas) {
+      if (req.body.isDeleteImg == "true") {
+        const { result } = await cloudinary.uploader.destroy(
+          "JersApp/" + userDatas.image.public_id
+        );
+        if (result != "ok") {
+          req.body.image = null;
+        }
       }
-      const uploadRes = await cloudinary.uploader.upload(req.file.path, {
-        upload_preset: "whatsappclone",
-      });
-      if (uploadRes) {
-        const user = {
-          mobNum,
-          password,
-          name,
-          image: {
-            url: uploadRes.secure_url,
-            public_id: uploadRes.public_id,
-          },
-          theme: userDatas.theme,
-        };
+      const user = {
+        mobNum,
+        password,
+        name,
+        image: req.file
+          ? {
+              url: req.file.path,
+              public_id: req.file.path
+                .split("/")
+                .slice(-2)
+                .join("/")
+                .replace(/\.\w+$/, ""),
+              mimetype: req.file.mimetype,
+              originalname: req.file.originalname,
+              size: req.file.size,
+            }
+          : req.body.image,
+        theme: userDatas.theme,
+      };
+      if (req.file) {
+        if (userDatas.image && userDatas.image.public_id) {
+          const { result } = await cloudinary.uploader.destroy(
+            "JersApp/" + userDatas.image.public_id
+          );
+          if (result != "ok") {
+            return res
+              .status(200)
+              .json({ status: "error", message: "Image deletion failed" });
+          }
+        }
         const savedUser = await WC_Auth.findByIdAndUpdate(req.params.id, user, {
           new: true,
         });
         if (savedUser) {
-          res
-            .status(200)
-            .json({ status: "ok", message: "Updated Successfully" });
+          res.status(200).json({
+            status: "ok",
+            data: savedUser,
+            message: "Profile updated successfully",
+          });
         } else {
+          if (req.file) {
+            this.DeleteImage(req.file.path);
+          }
           res.status(200).json({ status: "error", message: "Updation failed" });
         }
       } else {
-        res
-          .status(200)
-          .json({ status: "error", message: "Image Updation failed" });
+        const savedUser = await WC_Auth.findByIdAndUpdate(req.params.id, user, {
+          new: true,
+        });
+        if (savedUser) {
+          res.status(200).json({
+            status: "ok",
+            data: savedUser,
+            message: "Profile updated successfully",
+          });
+        } else {
+          if (req.file) {
+            this.DeleteImage(req.file.path);
+          }
+          res.status(200).json({ status: "error", message: "Updation failed" });
+        }
       }
     } else {
-      const savedUser = await WC_Auth.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        {
-          new: true,
-        }
-      );
-      res.status(200).json({ status: "ok", data: savedUser });
+      if (req.file) {
+        this.DeleteImage(req.file.path);
+      }
+      res.status(200).json({ status: "error", message: "User not found" });
     }
   } catch (error) {
     console.error("Error:", error);
@@ -239,5 +295,19 @@ exports.updateTheme = async (req, res) => {
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.DeleteImage = async (public_id) => {
+  try {
+    await cloudinary.uploader.destroy(
+      "JersApp/" +
+        public_id
+          .split("/")
+          .slice(-2)
+          .join("/")
+          .replace(/\.\w+$/, "")
+    );
+  } catch (error) {
+    console.log("Error:", error);
   }
 };

@@ -14,10 +14,9 @@ exports.getAllStatus = async (req, res, next) => {
         text: elem.text,
         file: elem.file.map((img) => ({
           format: img.format,
-          url: `${BASE_URL}/${img.url}`,
+          url: img.url,
         })),
       }));
-      console.log(DATA, "allStatus");
       res.status(200).json({ status: "ok", data: DATA });
     }
   } catch (error) {
@@ -36,7 +35,7 @@ exports.getStatusByID = async (req, res, next) => {
         text: allData.text,
         file: allData.file.map((img) => ({
           format: img.format,
-          url: `${BASE_URL}/${img.url}`,
+          url: img.url,
         })),
       };
       res.status(200).json({ status: "ok", data: DATA });
@@ -50,25 +49,36 @@ exports.addStatus = async (req, res, next) => {
   const { userID, text, image } = req.body;
   try {
     if (!req.files) {
+      if (req.file) {
+        this.DeleteImage(req.file.path);
+      }
       res.status(200).json({ status: "error", message: "No data found" });
     } else {
       const userStatus = await WC_status.findOne({ userID });
       const userData = await WC_Auth.findById(userID);
-      console.log(userData, "Data");
+      const AddFile = (file) => ({
+        url: file.path,
+        public_id: file.path
+          .split("/")
+          .slice(-2)
+          .join("/")
+          .replace(/\.\w+$/, ""),
+        format: file.mimetype,
+        originalname: file.originalname,
+        size: file.size,
+      });
       if (userStatus && userData) {
-        // If user data exists, update the existing document
         userStatus.file = userStatus.file.concat(
-          req.files.map((file) => ({
-            url: file.path,
-            format: file.mimetype,
-          }))
+          req.files.map((file) => AddFile(file))
         );
         userStatus.userName = userData.name;
         const result = await userStatus.save();
-        console.log(result, "res");
         if (result) {
           res.status(200).json({ status: "ok", message: "Status Updated" });
         } else {
+          if (req.file) {
+            this.DeleteImage(req.file.path);
+          }
           res
             .status(200)
             .json({ status: "error", message: "Failed to Update Status" });
@@ -78,16 +88,16 @@ exports.addStatus = async (req, res, next) => {
         const newVal = new WC_status({
           userID,
           text,
-          file: req.files.map((file) => ({
-            url: file.path,
-            format: file.mimetype,
-          })),
+          file: req.files.map((file) => AddFile(file)),
           userName: userData?.name,
         });
         const result = await newVal.save();
         if (result) {
           res.status(200).json({ status: "ok", message: "Status Posted" });
         } else {
+          if (req.file) {
+            this.DeleteImage(req.file.path);
+          }
           res
             .status(200)
             .json({ status: "error", message: "Failed to Post Status" });
@@ -95,11 +105,13 @@ exports.addStatus = async (req, res, next) => {
       }
     }
   } catch (error) {
+    if (req.file) {
+      this.DeleteImage(req.file.path);
+    }
     console.log(error);
     res.status(500).send(error);
   }
 };
-
 exports.deleteStatus = async (req, res, next) => {
   try {
     const status = await WC_status.findById(req.params.id);
@@ -123,5 +135,19 @@ exports.deleteStatus = async (req, res, next) => {
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.DeleteImage = async (public_id) => {
+  try {
+    await cloudinary.uploader.destroy(
+      "JersApp/" +
+        public_id
+          .split("/")
+          .slice(-2)
+          .join("/")
+          .replace(/\.\w+$/, "")
+    );
+  } catch (error) {
+    console.log("Error:", error);
   }
 };
