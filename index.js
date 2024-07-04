@@ -21,6 +21,8 @@ const Auth = require("./routes/users");
 const Token = require("./routes/token");
 const Contacts = require("./routes/contacts");
 const Status = require("./routes/status");
+const Groups = require("./routes/group");
+const Members = require("./routes/member");
 
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
@@ -28,7 +30,7 @@ httpServer.listen(PORT, () => {
 });
 
 app.get("/", (req, res) => {
-  res.status(200).json({status:"ok",message:"Socket Server is running"});
+  res.status(200).json({ status: "ok", message: "Socket Server is running" });
 });
 
 app.use("/api", Messages);
@@ -36,4 +38,6 @@ app.use("/api/auth", Auth);
 app.use("/api/auth", Token);
 app.use("/api", Contacts);
 app.use("/api/status", Status);
+app.use("/api/group", Groups);
+app.use("/api/member", Members);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
