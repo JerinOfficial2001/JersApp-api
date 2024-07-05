@@ -311,3 +311,24 @@ exports.DeleteImage = async (public_id) => {
     console.log("Error:", error);
   }
 };
+exports.GetUsersByIDs = async (req, res, next) => {
+  try {
+    const userIds = req.body.ids;
+    console.log(userIds, "IDS");
+    const users = await Promise.all(
+      userIds.map(async (id) => {
+        const user = await WC_Auth.findById(id);
+        return user;
+      })
+    );
+    const foundUsers = users.filter((user) => user !== null);
+    if (foundUsers.length > 0) {
+      res.status(200).json({ status: "ok", data: foundUsers });
+    } else {
+      res.status(200).json({ status: "error", message: "No users found" });
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

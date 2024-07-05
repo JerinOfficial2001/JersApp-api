@@ -8,6 +8,7 @@ const {
   GetUsersByID,
   updateProfile,
   updateTheme,
+  GetUsersByIDs,
 } = require("../controllers/users");
 const router = express.Router();
 const multer = require("multer");
@@ -39,6 +40,7 @@ router.put("/update/:id", upload.single("image"), updateProfile);
 router.post("/login", login);
 router.get("/login", userData);
 router.post("/logout", logout);
+router.post("/getByIds", GetUsersByIDs);
 router.post("/updateTheme/:id", updateTheme);
 
 module.exports = router;
