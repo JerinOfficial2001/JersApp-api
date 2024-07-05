@@ -7,6 +7,8 @@ const {
   createGroup,
   getAllGroups,
   deleteAllGroups,
+  getGroups,
+  getGroupById,
 } = require("../controllers/Groups/groups");
 
 const storage = new CloudinaryStorage({
@@ -19,6 +21,8 @@ const upload = multer({ storage: storage });
 
 router.post("/creategroup", upload.single("image"), createGroup);
 router.get("/getAllgroups", getAllGroups);
+router.get("/getGroups", getGroups);
+router.get("/getgroupbyid/:id", getGroupById);
 router.delete("/deleteAllgroups", deleteAllGroups);
 
 module.exports = router;

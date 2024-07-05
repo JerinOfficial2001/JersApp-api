@@ -134,7 +134,10 @@ exports.userData = async (req, res, next) => {
     const user = await WC_Auth.findById(decoded.userId);
 
     if (user) {
-      res.status(200).json({ status: "ok", data: { user } });
+      res.status(200).json({
+        status: "ok",
+        data: Object.assign({}, user.toObject(), { accessToken: token }),
+      });
     } else {
       res.status(404).json({ status: "error", message: "User not found" });
     }
@@ -314,7 +317,6 @@ exports.DeleteImage = async (public_id) => {
 exports.GetUsersByIDs = async (req, res, next) => {
   try {
     const userIds = req.body.ids;
-    console.log(userIds, "IDS");
     const users = await Promise.all(
       userIds.map(async (id) => {
         const user = await WC_Auth.findById(id);

@@ -152,43 +152,55 @@ exports.deleteAllGroups = async (req, res, next) => {
     next(error);
   }
 };
+exports.getGroups = async (req, res, next) => {
+  const { userID } = req.query;
+  const token = req.headers.authorization?.replace("Bearer ", "");
+
+  try {
+    const isAuthenticated = await authenticateByTokenAndUserID(
+      token,
+      userID
+    ).then((data) => data);
+    if (token && isAuthenticated) {
+      const UserData = isAuthenticated;
+      if (UserData) {
+        const User = await WC_Auth.findById(userID).populate("groups");
+        res.status(200).json({ status: "ok", data: User.groups });
+      } else {
+        res.status(200).json({ status: "error", message: "User not found" });
+      }
+    } else {
+      res.status(200).json({ status: "error", message: "Un-authorized" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+exports.getGroupById = async (req, res, next) => {
+  const { userID } = req.query;
+  const token = req.headers.authorization?.replace("Bearer ", "");
+
+  try {
+    const isAuthenticated = await authenticateByTokenAndUserID(
+      token,
+      userID
+    ).then((data) => data);
+    if (token && isAuthenticated) {
+      const UserData = isAuthenticated;
+      if (UserData) {
+        const group = await WC_Group.findById(req.params.id);
+        res.status(200).json({ status: "ok", data: group });
+      } else {
+        res.status(200).json({ status: "error", message: "User not found" });
+      }
+    } else {
+      res.status(200).json({ status: "error", message: "Un-authorized" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
 exports.edit = async (req, res, next) => {
-  const { userID } = req.query;
-  const token = req.headers.authorization?.replace("Bearer ", "");
-
-  try {
-    const isAuthenticated = await authenticateByTokenAndUserID(
-      token,
-      userID
-    ).then((data) => data);
-    if (token && isAuthenticated) {
-      const UserData = isAuthenticated;
-    } else {
-      res.status(200).json({ status: "error", message: "Un-authorized" });
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-exports.getAll = async (req, res, next) => {
-  const { userID } = req.query;
-  const token = req.headers.authorization?.replace("Bearer ", "");
-
-  try {
-    const isAuthenticated = await authenticateByTokenAndUserID(
-      token,
-      userID
-    ).then((data) => data);
-    if (token && isAuthenticated) {
-      const UserData = isAuthenticated;
-    } else {
-      res.status(200).json({ status: "error", message: "Un-authorized" });
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-exports.getByPage = async (req, res, next) => {
   const { userID } = req.query;
   const token = req.headers.authorization?.replace("Bearer ", "");
 
