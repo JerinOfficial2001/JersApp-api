@@ -55,7 +55,6 @@ exports.getAllMembers = async (req, res) => {
 exports.GetMembersByGroupID = async (req, res, next) => {
   const { userID, groupID } = req.query;
   const token = req.headers.authorization?.replace("Bearer ", "");
-
   try {
     const isAuthenticated = await authenticateByTokenAndUserID(
       token,
@@ -71,9 +70,8 @@ exports.GetMembersByGroupID = async (req, res, next) => {
           for (let member of AllMembers.members) {
             const user = await WC_Auth.findById(member.user_id);
             if (user) {
-              Members.push(
-                Object.assign({}, member.toObject(), user.toObject())
-              );
+              const { _id, ...userWithoutId } = user.toObject();
+              Members.push(Object.assign({}, member.toObject(), userWithoutId));
             } else {
               console.error(`User with ID ${member.user_id} not found.`);
             }

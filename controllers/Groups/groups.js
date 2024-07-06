@@ -12,7 +12,10 @@ const { authenticateByTokenAndUserID } = require("../../utils/Authentication");
 exports.createGroup = async (req, res, next) => {
   const { userID } = req.query;
   const token = req.headers.authorization?.replace("Bearer ", "");
-
+  let members = req.body.members;
+  // if (!Array.isArray(members)) {
+  //   members = [members];
+  // }
   try {
     const isAuthenticated = await authenticateByTokenAndUserID(
       token,
@@ -32,7 +35,7 @@ exports.createGroup = async (req, res, next) => {
           res.status(200).json({ status: "error", data: GroupAdmin.message });
         } else {
           const newMembers = await CreateArrayOfMember(
-            req.body.members,
+            members,
             UserData._id
           ).then((data) => data);
           if (!newMembers) {
@@ -54,26 +57,31 @@ exports.createGroup = async (req, res, next) => {
               UserData.groups.push(result._id);
               const IsComplete = await UserData.save();
               if (IsComplete) {
-                const IsGrpIdAddedToUser = await AddGroupIdToUser(
-                  result._id,
-                  req.body.members
-                ).then((data) => data);
-                if (IsGrpIdAddedToUser && !IsGrpIdAddedToUser.message) {
-                  result.members = [GroupAdmin.data._id, ...newMembers.data];
-                  const IsGrpAdded = await result.save();
-                  if (IsGrpAdded) {
+                result.members = [GroupAdmin.data._id, ...newMembers.data];
+                const IsGrpAdded = await result.save();
+
+                if (IsGrpAdded) {
+                  const IsGrpIdAddedToUser = await AddGroupIdToUser(
+                    IsGrpAdded._id,
+                    members
+                  ).then((data) => data);
+
+                  if (IsGrpIdAddedToUser && !IsGrpIdAddedToUser.message) {
                     res.status(200).json({
                       status: "ok",
                       message: "Group created successfully",
                     });
                   } else {
-                    return { status: "error", message: "Failed" };
+                    res.status(200).json({
+                      status: "error",
+                      message: "Error Occured While Adding GroupID to User",
+                    });
                   }
                 } else {
-                  return {
+                  res.status(200).json({
                     status: "error",
-                    message: "Error Occured While Adding GroupID to User",
-                  };
+                    message: "Creating group failed",
+                  });
                 }
               } else {
                 res.status(200).json({
