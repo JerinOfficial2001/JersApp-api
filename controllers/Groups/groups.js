@@ -65,7 +65,6 @@ exports.createGroup = async (req, res, next) => {
                     IsGrpAdded._id,
                     members
                   ).then((data) => data);
-
                   if (IsGrpIdAddedToUser && !IsGrpIdAddedToUser.message) {
                     res.status(200).json({
                       status: "ok",

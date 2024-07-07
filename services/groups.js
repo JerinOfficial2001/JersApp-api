@@ -57,33 +57,40 @@ exports.CheckMemberPresentInGroup = async (Array, id) => {
 exports.AddGroupIdToUser = async (groupID, UserIDs) => {
   try {
     if (groupID && UserIDs.length > 0) {
+      let allSuccessful = true;
+
       for (const UserID of UserIDs) {
         const User = await WC_Auth.findById(UserID);
         if (User) {
           User.groups.push(groupID);
           const result = await User.save();
-          if (result) {
-            return true;
-          } else {
-            return {
-              status: "error",
-              message: "Adding groupId to user failed",
-            };
+          if (!result) {
+            allSuccessful = false;
           }
         } else {
           return {
             status: "error",
-            message: "AddGroupIdToUser : Invalid UserID",
+            message: `AddGroupIdToUser : Invalid UserID ${UserID}`,
           };
         }
+      }
+
+      if (allSuccessful) {
+        return true;
+      } else {
+        return {
+          status: "error",
+          message: "Adding groupId to one or more users failed",
+        };
       }
     } else {
       return { status: "error", message: "Err at linking group with user" };
     }
   } catch (error) {
-    return { status: "error", message: "AddGroupIdToUser" };
+    return { status: "error", message: `AddGroupIdToUser: ${error.message}` };
   }
 };
+
 exports.RemoveGroupFromEveryUser = async (allUsers, IDs) => {
   try {
     for (let user of allUsers) {
