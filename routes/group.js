@@ -9,6 +9,7 @@ const {
   deleteAllGroups,
   getGroups,
   getGroupById,
+  updateGroup,
 } = require("../controllers/Groups/groups");
 
 const storage = new CloudinaryStorage({
@@ -23,6 +24,7 @@ router.post("/creategroup", upload.single("image"), createGroup);
 router.get("/getAllgroups", getAllGroups);
 router.get("/getGroups", getGroups);
 router.get("/getgroupbyid/:id", getGroupById);
+router.put("/updategroup/:id", updateGroup);
 router.delete("/deleteAllgroups", deleteAllGroups);
 
 module.exports = router;

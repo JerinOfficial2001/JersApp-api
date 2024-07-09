@@ -13,7 +13,7 @@ router.get("/getAllMembers", getAllMembers);
 router.get("/getMembers", GetMembersByGroupID);
 router.post("/createmember", AddMembersToGroup);
 router.delete("/deleteAllMembers", DeleteAllMembers);
-router.delete("/removeMember", RemoveMemberFromGroup);
+router.delete("/removeMember/:id", RemoveMemberFromGroup);
 router.put("/updateMember/:id", UpdateMember);
 
 module.exports = router;

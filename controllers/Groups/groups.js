@@ -207,7 +207,7 @@ exports.getGroupById = async (req, res, next) => {
     next(error);
   }
 };
-exports.edit = async (req, res, next) => {
+exports.updateGroup = async (req, res, next) => {
   const { userID } = req.query;
   const token = req.headers.authorization?.replace("Bearer ", "");
 
@@ -218,6 +218,24 @@ exports.edit = async (req, res, next) => {
     ).then((data) => data);
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
+      if (UserData) {
+        const group = await WC_Group.findById(req.params.id);
+        if (group) {
+          if (req.body.group_name) {
+            group.group_name = req.body.group_name;
+          }
+          const result = await group.save();
+          if (result) {
+            res.status(200).json({ status: "ok", data: "Updated" });
+          } else {
+            res.status(200).json({ status: "error", message: "Failed" });
+          }
+        } else {
+          res.status(200).json({ status: "error", message: "Group not found" });
+        }
+      } else {
+        res.status(200).json({ status: "error", message: "User not found" });
+      }
     } else {
       res.status(200).json({ status: "error", message: "Un-authorized" });
     }

@@ -213,7 +213,7 @@ exports.RemoveMemberFromGroup = async (req, res, next) => {
       const UserData = isAuthenticated;
       if (UserData) {
         const Group = await WC_Group.findById(groupID);
-        const UserToRemove = req.body.userToRemove;
+        const UserToRemove = req.params.id;
 
         try {
           if (!UserToRemove) {
