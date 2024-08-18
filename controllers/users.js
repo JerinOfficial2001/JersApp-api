@@ -1,13 +1,13 @@
-const { WC_Auth } = require("../model/auth");
+const { JersApp_Auth } = require("../model/auth");
 const jwt = require("jsonwebtoken");
-const { WC_Token } = require("../model/token");
-const { WC_TokenID } = require("../model/tokenID");
+const { JersApp_Token } = require("../model/token");
+const { JersApp_TokenID } = require("../model/tokenID");
 const cloudinary = require("../utils/cloudinary");
 
 const SECRET_KEY = process.env.SECRET_KEY;
 exports.getUsers = async (req, res, next) => {
   try {
-    const allData = await WC_Auth.find({});
+    const allData = await JersApp_Auth.find({});
     if (allData) {
       res.status(200).json({ status: "ok", data: allData });
     }
@@ -18,7 +18,7 @@ exports.getUsers = async (req, res, next) => {
 };
 exports.GetUsersByID = async (req, res, next) => {
   try {
-    const User = await WC_Auth.findById(req.params.id);
+    const User = await JersApp_Auth.findById(req.params.id);
     if (User) {
       res.status(200).json({ status: "ok", data: User });
     } else {
@@ -31,7 +31,7 @@ exports.GetUsersByID = async (req, res, next) => {
 };
 exports.login = async (req, res, next) => {
   try {
-    const user = await WC_Auth.findOne({ mobNum: req.body.mobNum });
+    const user = await JersApp_Auth.findOne({ mobNum: req.body.mobNum });
     if (!user) {
       res.status(200).json({ status: "error", message: "User not found" });
     } else if (user && user.password == req.body.password) {
@@ -52,7 +52,7 @@ exports.register = async (req, res, next) => {
   try {
     console.log("logged");
     const { mobNum, password, name } = req.body;
-    const allData = await WC_Auth.find({});
+    const allData = await JersApp_Auth.find({});
     const particularData = allData.find((i) => i.mobNum == mobNum);
     if (particularData) {
       if (req.file) {
@@ -61,7 +61,7 @@ exports.register = async (req, res, next) => {
       res.status(200).json({ status: "error", message: "User Already Exists" });
     } else {
       if (req.file) {
-        const user = new WC_Auth({
+        const user = new JersApp_Auth({
           mobNum,
           password,
           name,
@@ -90,7 +90,7 @@ exports.register = async (req, res, next) => {
             .json({ status: "error", message: "Registration failed" });
         }
       } else {
-        const response = await WC_Auth.create({
+        const response = await JersApp_Auth.create({
           mobNum,
           password,
           name,
@@ -124,14 +124,17 @@ exports.userData = async (req, res, next) => {
     if (!token) {
       return res
         .status(200)
-        .json({ status: "error", message: "Unauthorized - Missing WC_Token" });
+        .json({
+          status: "error",
+          message: "Unauthorized - Missing JersApp_Token",
+        });
     }
 
     // Verify and decode the token
     const decoded = jwt.verify(token, SECRET_KEY);
 
     // Retrieve user data based on the decoded information
-    const user = await WC_Auth.findById(decoded.userId);
+    const user = await JersApp_Auth.findById(decoded.userId);
 
     if (user) {
       res.status(200).json({
@@ -145,32 +148,35 @@ exports.userData = async (req, res, next) => {
     console.error("Error:", error);
     res
       .status(401)
-      .json({ status: "error", message: "Unauthorized - Invalid WC_Token" });
+      .json({
+        status: "error",
+        message: "Unauthorized - Invalid JersApp_Token",
+      });
   }
 };
 exports.logout = async (req, res, next) => {
   try {
     const { token, name } = req.body;
     if (token) {
-      const tokenId = await WC_Token.findOne({ token });
+      const tokenId = await JersApp_Token.findOne({ token });
       if (tokenId) {
-        const id = await WC_TokenID.findOne({ tokenID: tokenId._id });
+        const id = await JersApp_TokenID.findOne({ tokenID: tokenId._id });
         if (id) {
           if (!name) {
-            await WC_Token.findByIdAndDelete(tokenId._id);
-            await WC_TokenID.findByIdAndDelete(id._id);
+            await JersApp_Token.findByIdAndDelete(tokenId._id);
+            await JersApp_TokenID.findByIdAndDelete(id._id);
             res
               .status(200)
               .json({ status: "ok", message: "Logged out successfully" });
           } else {
-            await WC_TokenID.findByIdAndDelete(id._id);
+            await JersApp_TokenID.findByIdAndDelete(id._id);
             res
               .status(200)
               .json({ status: "ok", message: "Web Session Ended" });
           }
         } else {
           if (!name) {
-            await WC_Token.findByIdAndDelete(tokenId._id);
+            await JersApp_Token.findByIdAndDelete(tokenId._id);
             res
               .status(200)
               .json({ status: "ok", message: "Logged out successfully" });
@@ -194,7 +200,7 @@ exports.logout = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     const { mobNum, password, name, theme } = req.body;
-    const userDatas = await WC_Auth.findById(req.params.id);
+    const userDatas = await JersApp_Auth.findById(req.params.id);
     if (userDatas) {
       if (req.body.isDeleteImg == "true") {
         const { result } = await cloudinary.uploader.destroy(
@@ -234,9 +240,13 @@ exports.updateProfile = async (req, res, next) => {
               .json({ status: "error", message: "Image deletion failed" });
           }
         }
-        const savedUser = await WC_Auth.findByIdAndUpdate(req.params.id, user, {
-          new: true,
-        });
+        const savedUser = await JersApp_Auth.findByIdAndUpdate(
+          req.params.id,
+          user,
+          {
+            new: true,
+          }
+        );
         if (savedUser) {
           res.status(200).json({
             status: "ok",
@@ -250,9 +260,13 @@ exports.updateProfile = async (req, res, next) => {
           res.status(200).json({ status: "error", message: "Updation failed" });
         }
       } else {
-        const savedUser = await WC_Auth.findByIdAndUpdate(req.params.id, user, {
-          new: true,
-        });
+        const savedUser = await JersApp_Auth.findByIdAndUpdate(
+          req.params.id,
+          user,
+          {
+            new: true,
+          }
+        );
         if (savedUser) {
           res.status(200).json({
             status: "ok",
@@ -279,10 +293,10 @@ exports.updateProfile = async (req, res, next) => {
 };
 exports.updateTheme = async (req, res) => {
   try {
-    const user = await WC_Auth.findById(req.params.id);
+    const user = await JersApp_Auth.findById(req.params.id);
     if (user) {
       user.theme == req.body.theme;
-      const result = await WC_Auth.findByIdAndUpdate(req.params.id, user);
+      const result = await JersApp_Auth.findByIdAndUpdate(req.params.id, user);
       if (result) {
         res
           .status(200)
@@ -319,7 +333,7 @@ exports.GetUsersByIDs = async (req, res, next) => {
     const userIds = req.body.ids;
     const users = await Promise.all(
       userIds.map(async (id) => {
-        const user = await WC_Auth.findById(id);
+        const user = await JersApp_Auth.findById(id);
         return user;
       })
     );

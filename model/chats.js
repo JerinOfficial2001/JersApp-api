@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
-const WC_ChatsSchema = new mongoose.Schema({
+const JersApp_ChatsSchema = new mongoose.Schema({
   sender: String,
   receiver: String,
 });
 
-const WC_Chats = mongoose.model("WC_Chats", WC_ChatsSchema);
-exports.WC_Chats = WC_Chats;
+const JersApp_Chats = mongoose.model("JersApp_Chats", JersApp_ChatsSchema);
+exports.JersApp_Chats = JersApp_Chats;

@@ -1,10 +1,10 @@
-const { WC_Chats } = require("../model/chats");
-const { WC_Contact } = require("../model/contacts");
-const { WC_Message } = require("../model/message");
+const { JersApp_Chats } = require("../model/chats");
+const { JersApp_Contact } = require("../model/contacts");
+const { JersApp_Message } = require("../model/message");
 
 exports.getAllMessage = async (req, res, next) => {
   try {
-    const response = await WC_Message.find({});
+    const response = await JersApp_Message.find({});
     res.status(200).json({ status: "ok", data: response });
   } catch (error) {
     next("Error:", error);
@@ -14,7 +14,7 @@ exports.getAllMessage = async (req, res, next) => {
 exports.deleteMsgs = async (req, res, next) => {
   const { id } = req.query;
   try {
-    const result = await WC_Message.findByIdAndDelete(id);
+    const result = await JersApp_Message.findByIdAndDelete(id);
     if (result) {
       res.status(200).json({ status: "ok", message: "deleted" });
     } else {
@@ -27,14 +27,14 @@ exports.deleteMsgs = async (req, res, next) => {
 };
 exports.getLastMessage = async (req, res) => {
   try {
-    const chats = await WC_Chats.find({});
+    const chats = await JersApp_Chats.find({});
     const chatIDs = [req.params.senderID, req.params.receiverID];
 
     const filteredChats = chats.find((i) =>
       chatIDs.every((id) => i.sender == id || i.receiver == id)
     );
 
-    const lastMsg = await WC_Message.find({ chatID: filteredChats._id });
+    const lastMsg = await JersApp_Message.find({ chatID: filteredChats._id });
     res.status(200).json({
       status: "ok",
       data: {
@@ -51,8 +51,8 @@ exports.UpdateLastMsg = async (req, res) => {
     const ID1 = req.params.senderID;
     const ID2 = req.params.receiverID;
     if (ID1 && ID2) {
-      const contact1 = await WC_Contact.findById(ID1);
-      const contact2 = await WC_Contact.findById(ID2);
+      const contact1 = await JersApp_Contact.findById(ID1);
+      const contact2 = await JersApp_Contact.findById(ID2);
       if (contact1 && contact2) {
         const UpdatedContact1 = {
           Contact_id: contact1.Contact_id,
@@ -68,11 +68,11 @@ exports.UpdateLastMsg = async (req, res) => {
           ContactDetails: contact2.ContactDetails,
           lastMsg: req.body.lastMsg,
         };
-        const contact1Result = await WC_Contact.findByIdAndUpdate(
+        const contact1Result = await JersApp_Contact.findByIdAndUpdate(
           ID1,
           UpdatedContact1
         );
-        const contact2Result = await WC_Contact.findByIdAndUpdate(
+        const contact2Result = await JersApp_Contact.findByIdAndUpdate(
           ID2,
           UpdatedContact2
         );

@@ -1,6 +1,6 @@
-const { WC_Auth } = require("../../model/auth");
-const { WC_Group } = require("../../model/Groups/group");
-const { WC_grp_message } = require("../../model/Groups/message");
+const { JersApp_Auth } = require("../../model/auth");
+const { JersApp_Group } = require("../../model/Groups/group");
+const { JersApp_grp_message } = require("../../model/Groups/message");
 const { authenticateByTokenAndUserID } = require("../../utils/Authentication");
 
 exports.getMessages = async (req, res, next) => {
@@ -14,12 +14,14 @@ exports.getMessages = async (req, res, next) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const group = await WC_Group.findById(groupID).populate("messages");
+        const group = await JersApp_Group.findById(groupID).populate(
+          "messages"
+        );
 
         if (group) {
           let messages = [];
           for (let msg of group.messages) {
-            const user = await WC_Auth.findById(msg.sender_id);
+            const user = await JersApp_Auth.findById(msg.sender_id);
             const { image, name, ...otherDatas } = user.toObject();
             const newObj = Object.assign({}, msg.toObject(), { name, image });
             messages.push(newObj);

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const WC_AuthSchema = new mongoose.Schema({
+const JersApp_AuthSchema = new mongoose.Schema({
   mobNum: { type: String, unique: true },
   password: String,
   name: String,
@@ -8,10 +8,22 @@ const WC_AuthSchema = new mongoose.Schema({
   groups: [
     {
       type: mongoose.Types.ObjectId,
-      ref: "WC_Group",
+      ref: "JersApp_Group",
+    },
+  ],
+  contacts: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "JersApp_Contact",
+    },
+  ],
+  chats: [
+    {
+      type: mongoose.Types.ObjectId,
+      ref: "JersApp_Contact",
     },
   ],
 });
 
-const WC_Auth = mongoose.model("WC_Auth", WC_AuthSchema);
-exports.WC_Auth = WC_Auth;
+const JersApp_Auth = mongoose.model("JersApp_Auth", JersApp_AuthSchema);
+exports.JersApp_Auth = JersApp_Auth;

@@ -1,21 +1,28 @@
-const { WC_Chats } = require("../model/chats");
-const { WC_Contact } = require("../model/contacts");
-const { WC_Message } = require("../model/message");
+const { JersApp_Auth } = require("../model/auth");
+const { JersApp_Chats } = require("../model/chats");
+const { JersApp_Contact } = require("../model/contacts");
+const { JersApp_Message } = require("../model/message");
+const { authenticateByTokenAndUserID } = require("../utils/Authentication");
 
 exports.addContacts = async (req, res, next) => {
+  const { userID } = req.query;
   try {
-    const allContacts = await WC_Contact.find({
-      user_id: req.body.user_id,
-      Contact_id: req.body.Contact_id,
-    });
-    if (allContacts.length == 0) {
-      const response = await WC_Contact.create(req.body);
-      res.status(200).json({ status: "ok", data: response });
+    const contact = await JersApp_Contact.findById(req.body.id);
+    const user = await JersApp_Auth.findById(userID);
+    if (!userID || !contact)
+      return res
+        .status(200)
+        .json({ status: "error", message: "UserId or contact undefined" });
+    const chatIds = user.chats.map((elem) => elem.toString());
+    if (!chatIds.includes(req.body.id)) {
+      user.chats.push(contact._id);
+      user.save();
+      res.status(200).json({ status: "ok", data: contact });
     } else {
       res.status(200).json({
         status: "error",
         message: "already registered",
-        data: allContacts[0]._id,
+        data: contact.user_id,
       });
     }
   } catch (error) {
@@ -26,15 +33,9 @@ exports.addContacts = async (req, res, next) => {
 exports.getContacts = async (req, res, next) => {
   const { user_id } = req.query;
   try {
-    const allContacts = await WC_Contact.find({});
-    const filteredData = allContacts.filter(
-      (contact) => contact.user_id == user_id
-    );
-    if (filteredData) {
-      return res.status(200).json({ status: "ok", data: filteredData });
-    } else {
-      return res.status(200).json({ status: "ok", data: [] });
-    }
+    const allContacts = await JersApp_Auth.findById(user_id).populate("chats");
+    const filteredData = allContacts.chats;
+    res.status(200).json({ status: "ok", data: filteredData });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -43,27 +44,29 @@ exports.getContacts = async (req, res, next) => {
 exports.deleteContacts = async (req, res, next) => {
   const { sender_id, receiver_id, Contact_id } = req.query;
   try {
-    const result = await WC_Contact.findOne({ Contact_id });
+    const result = await JersApp_Contact.findOne({ Contact_id });
 
     if (result) {
-      const response = await WC_Chats.find({});
+      const response = await JersApp_Chats.find({});
       const chatIDs = [sender_id, receiver_id];
 
       const filteredChats = response.find((i) =>
         chatIDs.every((id) => i.sender == id || i.receiver == id)
       );
       if (filteredChats) {
-        const msgObj = await WC_Message.find({ chatID: filteredChats._id });
+        const msgObj = await JersApp_Message.find({
+          chatID: filteredChats._id,
+        });
         if (msgObj) {
-          const deletedContactObj = await WC_Contact.findByIdAndDelete(
+          const deletedContactObj = await JersApp_Contact.findByIdAndDelete(
             result._id
           );
           if (deletedContactObj) {
-            const deletedChat = await WC_Chats.findByIdAndDelete(
+            const deletedChat = await JersApp_Chats.findByIdAndDelete(
               filteredChats._id
             );
             if (deletedChat) {
-              const deletedMsg = await WC_Message.deleteMany({
+              const deletedMsg = await JersApp_Message.deleteMany({
                 chatID: filteredChats._id,
               });
 
@@ -86,11 +89,11 @@ exports.deleteContacts = async (req, res, next) => {
             res.status(200).json({ status: "ok", message: "NotDeleted" });
           }
         } else {
-          const deletedContactObj = await WC_Contact.findByIdAndDelete(
+          const deletedContactObj = await JersApp_Contact.findByIdAndDelete(
             receiver_id
           );
           if (deletedContactObj) {
-            const deletedChat = await WC_Chats.findByIdAndDelete(
+            const deletedChat = await JersApp_Chats.findByIdAndDelete(
               filteredChats._id
             );
             if (deletedChat) {
@@ -107,7 +110,7 @@ exports.deleteContacts = async (req, res, next) => {
           }
         }
       } else {
-        const deletedContactObj = await WC_Contact.findByIdAndDelete(
+        const deletedContactObj = await JersApp_Contact.findByIdAndDelete(
           result._id
         );
         if (deletedContactObj) {
@@ -123,4 +126,64 @@ exports.deleteContacts = async (req, res, next) => {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
+exports.AddAndGetAllContacts = async (req, res, next) => {
+  const { userID } = req.query;
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  try {
+    const isAuthenticated = await authenticateByTokenAndUserID(token, userID);
+
+    if (isAuthenticated) {
+      const user = await JersApp_Auth.findById(userID);
+      if (user) {
+        if (!user.contacts) {
+          user.contacts = [];
+        }
+        if (req.body.contacts && req.body.contacts.length > 0) {
+          const contacts = req.body.contacts;
+          for (let elem of contacts) {
+            const isExist = await JersApp_Contact.find({
+              creator_id: elem.user_id,
+              phone: elem.mobNum,
+            });
+            if (isExist?.length == 0) {
+              const result = await JersApp_Contact.create({
+                given_name: elem.givenName,
+                user_id: elem._id,
+                creator_id: elem.user_id,
+                phone: elem.mobNum,
+                name: elem.name,
+              });
+              if (result) await user.contacts.push(result._id);
+            }
+          }
+          await user.save();
+        }
+        const userContacts = await JersApp_Auth.findById(userID);
+        const allContacts = await userContacts.populate("contacts");
+        const result = await getImageByID(allContacts.contacts);
+        res.status(200).json({ status: "ok", data: result });
+      } else {
+        res.status(200).json({ status: "error", message: "User not found" });
+      }
+    } else {
+      res.status(200).json({ status: "error", message: "Un-Authorized" });
+    }
+  } catch (error) {
+    console.error("Error: ", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const getImageByID = async (arr) => {
+  let Arr = [];
+  for (let obj of arr) {
+    const result = await JersApp_Auth.findById(obj.creator_id);
+    const data = {
+      ...obj.toObject(),
+      image: result.image ? result.image : null,
+    };
+    Arr.push(data);
+  }
+  return Arr;
 };

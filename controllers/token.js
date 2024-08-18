@@ -1,8 +1,8 @@
-const { WC_Token } = require("../model/token");
-const { WC_TokenID } = require("../model/tokenID");
+const { JersApp_Token } = require("../model/token");
+const { JersApp_TokenID } = require("../model/tokenID");
 exports.getToken = async (req, res, next) => {
   try {
-    const token = await WC_Token.find({});
+    const token = await JersApp_Token.find({});
 
     if (token) {
       res.status(200).json({ status: "ok", data: token });
@@ -16,7 +16,7 @@ exports.getToken = async (req, res, next) => {
 };
 exports.addToken = async (req, res, next) => {
   try {
-    const token = await WC_Token.create(req.body);
+    const token = await JersApp_Token.create(req.body);
     if (token) {
       res.status(200).json({ status: "ok", data: token });
     } else {
@@ -30,7 +30,7 @@ exports.addToken = async (req, res, next) => {
 exports.deleteToken = async (req, res, next) => {
   try {
     const { id } = req.query;
-    const token = await WC_Token.findByIdAndDelete(id);
+    const token = await JersApp_Token.findByIdAndDelete(id);
 
     if (token) {
       res.status(200).json({ status: "ok", data: "deleted" });
@@ -44,7 +44,7 @@ exports.deleteToken = async (req, res, next) => {
 };
 exports.getTokenID = async (req, res, next) => {
   try {
-    const token = await WC_TokenID.find({});
+    const token = await JersApp_TokenID.find({});
     if (token) {
       res.status(200).json({ status: "ok", data: token });
     } else {
@@ -57,7 +57,7 @@ exports.getTokenID = async (req, res, next) => {
 };
 exports.addTokenID = async (req, res, next) => {
   try {
-    const token = await WC_TokenID.create(req.body);
+    const token = await JersApp_TokenID.create(req.body);
     if (token) {
       res.status(200).json({ status: "ok", data: token });
     } else {
@@ -71,7 +71,7 @@ exports.addTokenID = async (req, res, next) => {
 exports.deleteTokenID = async (req, res, next) => {
   try {
     const { id } = req.query;
-    const token = await WC_TokenID.findByIdAndDelete(id);
+    const token = await JersApp_TokenID.findByIdAndDelete(id);
 
     if (token) {
       res.status(200).json({ status: "ok", data: token });
@@ -86,7 +86,7 @@ exports.deleteTokenID = async (req, res, next) => {
 exports.getTokenByID = async (req, res, next) => {
   try {
     const { id } = req.query;
-    const token = await WC_Token.findById(id);
+    const token = await JersApp_Token.findById(id);
 
     if (token) {
       res.status(200).json({ status: "ok", data: token });
