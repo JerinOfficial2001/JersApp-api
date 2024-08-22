@@ -33,9 +33,37 @@ exports.addContacts = async (req, res, next) => {
 exports.getContacts = async (req, res, next) => {
   const { user_id } = req.query;
   try {
-    const allContacts = await JersApp_Auth.findById(user_id).populate("chats");
-    const filteredData = allContacts.chats;
+    const allContacts = await JersApp_Auth.findById(user_id).populate(
+      "contacts"
+    );
+    const contacts = allContacts.contacts.filter(
+      (elem) => elem.user_id != user_id
+    );
+    console.log(contacts, user_id);
+    const filteredData = await getImageByID(contacts);
     res.status(200).json({ status: "ok", data: filteredData });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.getContactsByID = async (req, res, next) => {
+  const id = req.params.id;
+  try {
+    const contact = await JersApp_Contact.findById(id);
+    res.status(200).json({ status: "ok", data: contact });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+exports.getChats = async (req, res, next) => {
+  const { user_id } = req.query;
+  try {
+    const allContacts = await JersApp_Auth.findById(user_id).populate("chats");
+    const filteredData = await getImageByID(allContacts.chats);
+    const result = await updateLastMsgNameByID(filteredData, user_id);
+    res.status(200).json({ status: "ok", data: result });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -178,12 +206,43 @@ exports.AddAndGetAllContacts = async (req, res, next) => {
 const getImageByID = async (arr) => {
   let Arr = [];
   for (let obj of arr) {
-    const result = await JersApp_Auth.findById(obj.creator_id);
+    const result = await JersApp_Auth.findById(obj.user_id);
     const data = {
       ...obj.toObject(),
-      image: result.image ? result.image : null,
+      image: result && result.image ? result.image : null,
     };
     Arr.push(data);
   }
   return Arr;
+};
+const updateLastMsgNameByID = async (arr, id) => {
+  let allDatas = [];
+  for (let contact of arr) {
+    if (contact.lastMsg && contact.lastMsg.id) {
+      const allContacts = await getAllcontacts(id);
+      const senderContact = allContacts.find(
+        (elem) => elem.user_id == contact.user_id
+      );
+      if (contact.lastMsg && contact.lastMsg.id) {
+        if (contact.lastMsg.id == id) {
+          contact.lastMsg["name"] = `You`;
+        } else {
+          contact.lastMsg["name"] = senderContact.given_name
+            ? senderContact.given_name
+            : senderContact.phone;
+        }
+        delete contact.lastMsg.id;
+      }
+    }
+    allDatas.push(contact);
+  }
+  return allDatas;
+};
+const getAllcontacts = async (id) => {
+  const user = await JersApp_Auth.findById(id);
+  if (!user.contacts) {
+    user.contacts = [];
+  }
+  const userContacts = await user.populate("contacts");
+  return userContacts.contacts;
 };
