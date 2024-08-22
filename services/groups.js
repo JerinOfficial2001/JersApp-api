@@ -1,10 +1,10 @@
-const { WC_grp_members } = require("../model/Groups/member");
-const { WC_Auth } = require("../model/auth");
+const { JersApp_grp_members } = require("../model/Groups/member");
+const { JersApp_Auth } = require("../model/auth");
 const { CreateMember } = require("./member");
 
 exports.AddMembersTOGroup = async (membersToBeAdded, userID, DB_Data) => {
   if (membersToBeAdded) {
-    const AllMembers = await WC_grp_members.find({});
+    const AllMembers = await JersApp_grp_members.find({});
     membersToBeAdded.forEach(async (element) => {
       const MemberExit = AllMembers.find((i) => i.user_id == element);
       if (!MemberExit) {
@@ -60,7 +60,7 @@ exports.AddGroupIdToUser = async (groupID, UserIDs) => {
       let allSuccessful = true;
 
       for (const UserID of UserIDs) {
-        const User = await WC_Auth.findById(UserID);
+        const User = await JersApp_Auth.findById(UserID);
         if (User) {
           User.groups.push(groupID);
           const result = await User.save();

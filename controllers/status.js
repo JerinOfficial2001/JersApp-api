@@ -1,10 +1,10 @@
-const { WC_Auth } = require("../model/auth");
-const { WC_status } = require("../model/status");
+const { JersApp_Auth } = require("../model/auth");
+const { JersApp_status } = require("../model/status");
 const cloudinary = require("../utils/cloudinary");
 const BASE_URL = process.env.BASE_URL;
 exports.getAllStatus = async (req, res, next) => {
   try {
-    const allData = await WC_status.find({});
+    const allData = await JersApp_status.find({});
     if (allData) {
       // console.log(BASE_URL);
       const DATA = allData.map((elem) => ({
@@ -26,7 +26,7 @@ exports.getAllStatus = async (req, res, next) => {
 };
 exports.getStatusByID = async (req, res, next) => {
   try {
-    const allData = await WC_status.findById(req.params.id);
+    const allData = await JersApp_status.findById(req.params.id);
     if (allData) {
       const DATA = {
         _id: allData._id,
@@ -54,8 +54,8 @@ exports.addStatus = async (req, res, next) => {
       }
       res.status(200).json({ status: "error", message: "No data found" });
     } else {
-      const userStatus = await WC_status.findOne({ userID });
-      const userData = await WC_Auth.findById(userID);
+      const userStatus = await JersApp_status.findOne({ userID });
+      const userData = await JersApp_Auth.findById(userID);
       const AddFile = (file) => ({
         url: file.path,
         public_id: file.path
@@ -85,7 +85,7 @@ exports.addStatus = async (req, res, next) => {
         }
       } else {
         // If user data doesn't exist, create a new document
-        const newVal = new WC_status({
+        const newVal = new JersApp_status({
           userID,
           text,
           file: req.files.map((file) => AddFile(file)),
@@ -114,11 +114,11 @@ exports.addStatus = async (req, res, next) => {
 };
 exports.deleteStatus = async (req, res, next) => {
   try {
-    const status = await WC_status.findById(req.params.id);
+    const status = await JersApp_status.findById(req.params.id);
     if (status) {
       const response = await cloudinary.uploader.destroy(status.file.public_id);
       if (response) {
-        const result = await WC_status.findByIdAndDelete(req.params.id);
+        const result = await JersApp_status.findByIdAndDelete(req.params.id);
         if (result) {
           res.status(200).json({ status: "ok", message: "Status Deleted" });
         } else {

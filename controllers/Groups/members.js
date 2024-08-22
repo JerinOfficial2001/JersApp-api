@@ -1,6 +1,6 @@
-const { WC_Group } = require("../../model/Groups/group");
-const { WC_grp_members } = require("../../model/Groups/member");
-const { WC_Auth } = require("../../model/auth");
+const { JersApp_Group } = require("../../model/Groups/group");
+const { JersApp_grp_members } = require("../../model/Groups/member");
+const { JersApp_Auth } = require("../../model/auth");
 const { CreateMember } = require("../../services/member");
 const { authenticateByTokenAndUserID } = require("../../utils/Authentication");
 
@@ -16,7 +16,7 @@ exports.DeleteAllMembers = async (req, res) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const result = await WC_grp_members.deleteMany();
+        const result = await JersApp_grp_members.deleteMany();
         res.status(200).json({ status: "ok", data: result });
       } else {
         res.status(200).json({ status: "error", message: "User not found" });
@@ -40,7 +40,7 @@ exports.getAllMembers = async (req, res) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const result = await WC_grp_members.find({});
+        const result = await JersApp_grp_members.find({});
         res.status(200).json({ status: "ok", data: result });
       } else {
         res.status(200).json({ status: "error", message: "User not found" });
@@ -63,12 +63,14 @@ exports.GetMembersByGroupID = async (req, res, next) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const AllMembers = await WC_Group.findById(groupID).populate("members");
+        const AllMembers = await JersApp_Group.findById(groupID).populate(
+          "members"
+        );
 
         let Members = [];
         try {
           for (let member of AllMembers.members) {
-            const user = await WC_Auth.findById(member.user_id);
+            const user = await JersApp_Auth.findById(member.user_id);
             if (user) {
               const { _id, ...userWithoutId } = user.toObject();
               Members.push(Object.assign({}, member.toObject(), userWithoutId));
@@ -103,7 +105,7 @@ exports.AddMembersToGroup = async (req, res, next) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const Group = await WC_Group.findById(groupID);
+        const Group = await JersApp_Group.findById(groupID);
         const membersToAdd = req.body.members;
         try {
           if (membersToAdd.length == 0) {
@@ -113,12 +115,14 @@ exports.AddMembersToGroup = async (req, res, next) => {
             });
           }
           if (Group) {
-            const AllUsers = await WC_Auth.find({});
+            const AllUsers = await JersApp_Auth.find({});
             const UserIDs = AllUsers.map((i) => i._id.toHexString());
             const memberUserIDsInGroup = await Promise.all(
               Group.members.map(async (member) => {
                 try {
-                  const memberUserID = await WC_grp_members.findById(member);
+                  const memberUserID = await JersApp_grp_members.findById(
+                    member
+                  );
                   return memberUserID.user_id;
                 } catch (error) {
                   console.error(
@@ -143,7 +147,7 @@ exports.AddMembersToGroup = async (req, res, next) => {
                     ).then((data) => data);
                     if (IsCreated.status == "ok") {
                       Group.members.push(IsCreated.data._id);
-                      const UserData = await WC_Auth.findById(i.user_id);
+                      const UserData = await JersApp_Auth.findById(i.user_id);
                       UserData.groups.push(groupID);
                       const IsGroupLinked = await UserData.save();
                       if (IsGroupLinked) {
@@ -212,7 +216,7 @@ exports.RemoveMemberFromGroup = async (req, res, next) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const Group = await WC_Group.findById(groupID);
+        const Group = await JersApp_Group.findById(groupID);
         const UserToRemove = req.params.id;
 
         try {
@@ -223,7 +227,9 @@ exports.RemoveMemberFromGroup = async (req, res, next) => {
             });
           }
           if (Group) {
-            const Member = await WC_grp_members.findByIdAndDelete(UserToRemove);
+            const Member = await JersApp_grp_members.findByIdAndDelete(
+              UserToRemove
+            );
             if (Member) {
               Group.members = Group.members.filter((i) => i != UserToRemove);
               const IsRemoved = await Group.save();
@@ -276,7 +282,7 @@ exports.UpdateMember = async (req, res) => {
     if (token && isAuthenticated) {
       const UserData = isAuthenticated;
       if (UserData) {
-        const memberData = await WC_grp_members.findById(memberID);
+        const memberData = await JersApp_grp_members.findById(memberID);
         if (memberData) {
           memberData.role = req.body.role;
           const result = await memberData.save();

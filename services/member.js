@@ -1,11 +1,11 @@
-const { WC_grp_members } = require("../model/Groups/member");
-const { WC_Auth } = require("../model/auth");
+const { JersApp_grp_members } = require("../model/Groups/member");
+const { JersApp_Auth } = require("../model/auth");
 
 exports.CreateMember = async (id, role) => {
   try {
-    // const IsUserExist = await WC_Auth.findById(id);
+    // const IsUserExist = await JersApp_Auth.findById(id);
     // if (IsUserExist) {
-    const result = await WC_grp_members.create({
+    const result = await JersApp_grp_members.create({
       user_id: id,
       role,
     });
@@ -26,18 +26,20 @@ exports.CreateArrayOfMember = async (Array, userID) => {
   try {
     var Members = [];
     if (Array.length > 0) {
-      const allUsers = await WC_Auth.find({});
+      const allUsers = await JersApp_Auth.find({});
       const ArrayOfIDs = allUsers
         .map((i) => i._id.toHexString())
         .filter((i) => Array.includes(i));
 
       if (ArrayOfIDs && ArrayOfIDs.length > 0) {
         for (const i of ArrayOfIDs) {
-          const IsMemberExist = await WC_grp_members.findOne({ user_id: i });
+          const IsMemberExist = await JersApp_grp_members.findOne({
+            user_id: i,
+          });
 
           // if (!IsMemberExist) {
           try {
-            const result = await WC_grp_members.create({
+            const result = await JersApp_grp_members.create({
               user_id: i,
               role: "MEMBER",
             });
@@ -67,7 +69,7 @@ exports.CreateArrayOfMember = async (Array, userID) => {
 exports.GetUserIdOfMember = async (id) => {
   try {
     if (id) {
-      const memberUserID = await WC_grp_members.findById(id);
+      const memberUserID = await JersApp_grp_members.findById(id);
       if (memberUserID) {
         return { status: "ok", data: memberUserID._id };
       } else {

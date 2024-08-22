@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const WC_statusSchema = new mongoose.Schema({
+const JersApp_statusSchema = new mongoose.Schema({
   text: String,
   // video: { type: Object },
   file: { type: Array },
@@ -7,5 +7,5 @@ const WC_statusSchema = new mongoose.Schema({
   userName: String,
 });
 
-const WC_status = mongoose.model("WC_status", WC_statusSchema);
-exports.WC_status = WC_status;
+const JersApp_status = mongoose.model("JersApp_status", JersApp_statusSchema);
+exports.JersApp_status = JersApp_status;
