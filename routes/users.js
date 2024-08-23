@@ -4,7 +4,6 @@ const {
   register,
   userData,
   login,
-  logout,
   GetUsersByID,
   updateProfile,
   updateTheme,
@@ -39,7 +38,6 @@ router.post("/register", upload.single("image"), register);
 router.put("/update/:id", upload.single("image"), updateProfile);
 router.post("/login", login);
 router.get("/login", userData);
-router.post("/logout", logout);
 router.post("/getByIds", GetUsersByIDs);
 router.post("/updateTheme/:id", updateTheme);
 

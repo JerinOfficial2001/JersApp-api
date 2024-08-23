@@ -1,7 +1,5 @@
 const { JersApp_Auth } = require("../model/auth");
 const jwt = require("jsonwebtoken");
-const { JersApp_Token } = require("../model/token");
-const { JersApp_TokenID } = require("../model/tokenID");
 const cloudinary = require("../utils/cloudinary");
 
 const SECRET_KEY = process.env.SECRET_KEY;
@@ -122,12 +120,10 @@ exports.userData = async (req, res, next) => {
     const token = req.headers.authorization?.replace("Bearer ", ""); // Adjust this according to your token handling
 
     if (!token) {
-      return res
-        .status(200)
-        .json({
-          status: "error",
-          message: "Unauthorized - Missing JersApp_Token",
-        });
+      return res.status(200).json({
+        status: "error",
+        message: "Unauthorized - Missing JersApp_Token",
+      });
     }
 
     // Verify and decode the token
@@ -146,55 +142,10 @@ exports.userData = async (req, res, next) => {
     }
   } catch (error) {
     console.error("Error:", error);
-    res
-      .status(401)
-      .json({
-        status: "error",
-        message: "Unauthorized - Invalid JersApp_Token",
-      });
-  }
-};
-exports.logout = async (req, res, next) => {
-  try {
-    const { token, name } = req.body;
-    if (token) {
-      const tokenId = await JersApp_Token.findOne({ token });
-      if (tokenId) {
-        const id = await JersApp_TokenID.findOne({ tokenID: tokenId._id });
-        if (id) {
-          if (!name) {
-            await JersApp_Token.findByIdAndDelete(tokenId._id);
-            await JersApp_TokenID.findByIdAndDelete(id._id);
-            res
-              .status(200)
-              .json({ status: "ok", message: "Logged out successfully" });
-          } else {
-            await JersApp_TokenID.findByIdAndDelete(id._id);
-            res
-              .status(200)
-              .json({ status: "ok", message: "Web Session Ended" });
-          }
-        } else {
-          if (!name) {
-            await JersApp_Token.findByIdAndDelete(tokenId._id);
-            res
-              .status(200)
-              .json({ status: "ok", message: "Logged out successfully" });
-          } else {
-            res
-              .status(200)
-              .json({ status: "ok", message: "Session Not Available" });
-          }
-        }
-      }
-    } else {
-      res
-        .status(200)
-        .json({ status: "error", message: "Logged out successfully" });
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(500).send(error);
+    res.status(401).json({
+      status: "error",
+      message: "Unauthorized - Invalid JersApp_Token",
+    });
   }
 };
 exports.updateProfile = async (req, res, next) => {
