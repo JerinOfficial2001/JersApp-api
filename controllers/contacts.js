@@ -39,7 +39,6 @@ exports.getContacts = async (req, res, next) => {
     const contacts = allContacts.contacts.filter(
       (elem) => elem.user_id != user_id
     );
-    console.log(contacts, user_id);
     const filteredData = await getImageByID(contacts);
     res.status(200).json({ status: "ok", data: filteredData });
   } catch (error) {
