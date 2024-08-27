@@ -125,3 +125,18 @@ exports.UpdateLastMsg = async (req, res) => {
     res.status(404).json({ status: "error", message: "something Went wrong" });
   }
 };
+exports.sendMsg = async (req, res) => {
+  try {
+    const { chatID, sender, receiver, message } = req.body;
+    if (chatID != "" && sender != "" && receiver != "" && message) {
+      await JersApp_Message.create({ chatID, sender, receiver, message });
+      res.status(200).json({ status: "ok", message: "Message send" });
+    } else {
+      res
+        .status(200)
+        .json({ status: "error", message: "All fields are mandatory" });
+    }
+  } catch (error) {
+    res.status(404).json({ status: "error", message: "something Went wrong" });
+  }
+};
