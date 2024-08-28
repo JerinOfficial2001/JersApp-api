@@ -14,7 +14,9 @@ exports.getAllMessage = async (req, res, next) => {
       for (let msg of response) {
         const contact = await getContactByUserID(msg.sender, userData._id);
         delete contact._id;
-        const obj = { ...msg.toObject(), ...contact.toObject() };
+        delete contact.createdAt;
+        delete contact.updatedAt;
+        const obj = { ...msg.toObject(), ...contact };
         msgsWithContactData.push(obj);
       }
       res.status(200).json({ status: "ok", data: msgsWithContactData });

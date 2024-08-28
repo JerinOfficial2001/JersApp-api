@@ -34,7 +34,7 @@ exports.login = async (req, res, next) => {
       res.status(200).json({ status: "error", message: "User not found" });
     } else if (user && user.password == req.body.password) {
       const token = jwt.sign({ userId: user._id }, SECRET_KEY, {
-        expiresIn: "24h",
+        expiresIn: "1w",
       });
 
       res.status(200).json({ status: "ok", data: { token } });
@@ -48,7 +48,6 @@ exports.login = async (req, res, next) => {
 };
 exports.register = async (req, res, next) => {
   try {
-    console.log("logged");
     const { mobNum, password, name } = req.body;
     const allData = await JersApp_Auth.find({});
     const particularData = allData.find((i) => i.mobNum == mobNum);
@@ -141,11 +140,14 @@ exports.userData = async (req, res, next) => {
       res.status(404).json({ status: "error", message: "User not found" });
     }
   } catch (error) {
-    console.error("Error:", error);
-    res.status(401).json({
-      status: "error",
-      message: "Unauthorized - Invalid JersApp_Token",
-    });
+    if (error == "TokenExpiredError") {
+      res.status(200).json({ status: "error", message: "Token expired" });
+    } else {
+      res.status(200).json({
+        status: "error",
+        message: "Unauthorized - Invalid JersApp_Token",
+      });
+    }
   }
 };
 exports.updateProfile = async (req, res, next) => {
