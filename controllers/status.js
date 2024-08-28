@@ -3,11 +3,26 @@ const { JersApp_status } = require("../model/status");
 const cloudinary = require("../utils/cloudinary");
 const BASE_URL = process.env.BASE_URL;
 exports.getAllStatus = async (req, res, next) => {
+  const user_id = req.query.userID;
   try {
+    const allContacts = await JersApp_Auth.findById(user_id).populate(
+      "contacts"
+    );
+    const contacts = allContacts.contacts;
     const allData = await JersApp_status.find({});
-    if (allData) {
+    const stories = allData.map((elem) => {
+      const isExist = contacts.some((i) => i.user_id == elem.userID);
+      if (isExist) {
+        if (isExist.userID == user_id) {
+          return { ...elem.toObject(), isCreator: true };
+        } else {
+          return { ...elem.toObject(), isCreator: false };
+        }
+      }
+    });
+    if (stories) {
       // console.log(BASE_URL);
-      const DATA = allData.map((elem) => ({
+      const DATA = stories.map((elem) => ({
         _id: elem._id,
         userID: elem.userID,
         userName: elem.userName,
@@ -17,6 +32,7 @@ exports.getAllStatus = async (req, res, next) => {
           url: img.url,
         })),
       }));
+
       res.status(200).json({ status: "ok", data: DATA });
     }
   } catch (error) {

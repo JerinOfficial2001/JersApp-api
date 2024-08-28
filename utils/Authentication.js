@@ -13,3 +13,9 @@ exports.authenticateByTokenAndUserID = async (token, userid) => {
     return user;
   }
 };
+exports.getUserDataFromToken = async (token) => {
+  if (!token) return;
+  const decoded = jwt.verify(token, SECRET_KEY);
+  const user = await JersApp_Auth.findById(decoded.userId);
+  return user;
+};

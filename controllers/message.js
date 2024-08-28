@@ -1,11 +1,26 @@
 const { JersApp_Chats } = require("../model/chats");
 const { JersApp_Contact } = require("../model/contacts");
 const { JersApp_Message } = require("../model/message");
+const { getContactByUserID } = require("../services/contacts");
+const { getUserDataFromToken } = require("../utils/Authentication");
 
 exports.getAllMessage = async (req, res, next) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  const userData = token ? await getUserDataFromToken(token) : false;
   try {
     const response = await JersApp_Message.find({});
-    res.status(200).json({ status: "ok", data: response });
+    let msgsWithContactData = [];
+    if (response && userData) {
+      for (let msg of response) {
+        const contact = await getContactByUserID(msg.sender, userData._id);
+        delete contact._id;
+        const obj = { ...msg.toObject(), ...contact.toObject() };
+        msgsWithContactData.push(obj);
+      }
+      res.status(200).json({ status: "ok", data: msgsWithContactData });
+    } else {
+      res.status(200).json({ status: "error", message: "Un-Authorized" });
+    }
   } catch (error) {
     next("Error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -108,5 +123,25 @@ exports.UpdateLastMsg = async (req, res) => {
     }
   } catch (error) {
     res.status(404).json({ status: "error", message: "something Went wrong" });
+  }
+};
+exports.sendMsg = async (req, res) => {
+  try {
+    const { chatID, sender, receiver, message } = req.body;
+    if (chatID != "" && sender != "" && receiver != "" && message != "") {
+      const result = await JersApp_Message.create({
+        chatID,
+        sender,
+        receiver,
+        message,
+      });
+      res.status(200).json({ status: "ok", message: "Message send" });
+    } else {
+      res
+        .status(200)
+        .json({ status: "error", message: "All fields are mandatory" });
+    }
+  } catch (error) {
+    res.status(500).json({ status: "error", message: "something Went wrong" });
   }
 };

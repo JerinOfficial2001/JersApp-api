@@ -18,7 +18,6 @@ mongoose.connect(db).then(() => {
 //*Routes
 const Messages = require("./routes/message");
 const Auth = require("./routes/users");
-const Token = require("./routes/token");
 const Contacts = require("./routes/contacts");
 const Status = require("./routes/status");
 const Groups = require("./routes/group");
@@ -35,7 +34,6 @@ app.get("/", (req, res) => {
 
 app.use("/api", Messages);
 app.use("/api/auth", Auth);
-app.use("/api/auth", Token);
 app.use("/api", Contacts);
 app.use("/api/status", Status);
 app.use("/api/group", Groups);
