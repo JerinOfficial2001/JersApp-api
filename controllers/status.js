@@ -23,10 +23,7 @@ exports.getAllStatus = async (req, res, next) => {
     if (stories) {
       // console.log(BASE_URL);
       const DATA = stories.map((elem) => ({
-        _id: elem._id,
-        userID: elem.userID,
-        userName: elem.userName,
-        text: elem.text,
+        ...elem,
         file: elem.file.map((img) => ({
           format: img.format,
           url: img.url,
