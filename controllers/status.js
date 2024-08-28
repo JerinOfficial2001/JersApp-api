@@ -20,9 +20,9 @@ exports.getAllStatus = async (req, res, next) => {
         }
       }
     });
-    if (allData) {
+    if (stories) {
       // console.log(BASE_URL);
-      const DATA = allData.map((elem) => ({
+      const DATA = stories.map((elem) => ({
         _id: elem._id,
         userID: elem.userID,
         userName: elem.userName,
