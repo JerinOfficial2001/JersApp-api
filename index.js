@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const express = require("express");
 const { createServer } = require("http");
+const cron = require("node-cron");
 
 const app = express();
 const bodyParser = require("body-parser");
@@ -22,6 +23,7 @@ const Contacts = require("./routes/contacts");
 const Status = require("./routes/status");
 const Groups = require("./routes/group");
 const Members = require("./routes/member");
+const { deleteOldRecordsAndImages } = require("./controllers/status");
 
 const PORT = process.env.PORT || 4000;
 httpServer.listen(PORT, () => {
@@ -39,3 +41,6 @@ app.use("/api/status", Status);
 app.use("/api/group", Groups);
 app.use("/api/member", Members);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+cron.schedule("* * * * *", () => {
+  deleteOldRecordsAndImages();
+});

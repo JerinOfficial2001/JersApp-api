@@ -27,6 +27,7 @@ exports.getAllStatus = async (req, res, next) => {
         file: elem.file.map((img) => ({
           format: img.format,
           url: img.url,
+          public_id: img.public_id,
         })),
       }));
 
@@ -162,5 +163,35 @@ exports.DeleteImage = async (public_id) => {
     );
   } catch (error) {
     console.log("Error:", error);
+  }
+};
+exports.deleteOldRecordsAndImages = async () => {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours in milliseconds
+
+    const oldRecords = await JersApp_status.find({
+      createdAt: { $lt: twentyFourHoursAgo },
+    });
+
+    for (const record of oldRecords) {
+      for (const img of record.file) {
+        const publicId = "JersApp/" + img.public_id;
+        await cloudinary.uploader.destroy(publicId, (error, result) => {
+          if (error) {
+            console.error(
+              `Error deleting image ${publicId} from Cloudinary:`,
+              error
+            );
+          } else {
+            console.log(`Image ${publicId} deleted from Cloudinary.`);
+          }
+        });
+      }
+
+      await JersApp_status.deleteOne({ _id: record._id });
+      console.log(`Document with ID ${record._id} deleted from MongoDB.`);
+    }
+  } catch (error) {
+    console.log("Expired Status Deletion Error: ", error);
   }
 };

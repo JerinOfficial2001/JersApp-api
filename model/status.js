@@ -6,6 +6,7 @@ const JersApp_statusSchema = new mongoose.Schema(
     file: { type: Array },
     userID: String,
     userName: String,
+    createdAt: { type: Date, default: Date.now, expires: "24h" },
   },
   { timestamps: true }
 );
